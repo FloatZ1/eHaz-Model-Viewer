@@ -1,6 +1,14 @@
 # Prerequisites
 *.d
 
+
+build/*
+dependencies/*
+assets/*
+.cache/*
+
+
+
 # Compiled Object files
 *.slo
 *.lo
