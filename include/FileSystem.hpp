@@ -53,7 +53,7 @@ public:
       root = ".";
 
     if (extensions.empty())
-      extensions = {".png", ".jpg", ".obj"};
+      extensions = {".hzmdl", ".ahzm", ".glb"};
   }
 
   std::vector<std::string> GetFilesFromRoot() {
