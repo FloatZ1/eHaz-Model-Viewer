@@ -204,7 +204,7 @@ int main(int argc, char *argv[]) {
 
   auto mat = l_renderer.p_materialManager->SubmitMaterials();
 
-  BufferRange l_brMaterials = l_renderer.p_bufferManager->InsertNewDynamicData(
+  SBufferRange l_brMaterials = l_renderer.p_bufferManager->InsertNewDynamicData(
       mat.first.data(), mat.first.size() * sizeof(PBRMaterial),
       TypeFlags::BUFFER_TEXTURE_DATA);
 
@@ -220,7 +220,7 @@ int main(int argc, char *argv[]) {
 
   camData l_cdFinalData{g_camera.GetViewMatrix(), projection};
 
-  BufferRange l_brCameraDataLocation = l_renderer.SubmitDynamicData(
+  SBufferRange l_brCameraDataLocation = l_renderer.SubmitDynamicData(
       &l_cdFinalData, sizeof(l_cdFinalData), TypeFlags::BUFFER_CAMERA_DATA);
 
   std::string testPath = PROJECT_ROOT_DIR "/assets/test.hzmdl";
@@ -317,8 +317,11 @@ void LoadSelectedModel(std::string path) {
 
   renderer->p_bufferManager->ClearBuffer(TypeFlags::BUFFER_STATIC_MATRIX_DATA);
 
-  renderer->p_meshManager->ClearEverything();
+  renderer->p_bufferManager->ClearBuffer(TypeFlags::BUFFER_ANIMATED_MESH_DATA);
+  renderer->p_bufferManager->ClearBuffer(TypeFlags::BUFFER_ANIMATION_DATA);
 
+  renderer->p_meshManager->ClearEverything();
+  renderer->p_AnimatedModelManager->ClearEverything();
   renderer->p_renderQueue->ClearDynamicCommands();
   renderer->p_renderQueue->ClearStaticCommnads();
 
