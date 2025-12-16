@@ -322,6 +322,8 @@ void LoadSelectedModel(std::string path) {
 
   renderer->p_meshManager->ClearEverything();
   renderer->p_AnimatedModelManager->ClearEverything();
+  renderer->p_bufferManager->ClearBuffer(TypeFlags::BUFFER_STATIC_DATA);
+
   renderer->p_renderQueue->ClearDynamicCommands();
   renderer->p_renderQueue->ClearStaticCommnads();
 
