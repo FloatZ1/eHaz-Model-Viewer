@@ -22,6 +22,7 @@
 #include "ImGui/imgui_impl_opengl3.h"
 #include "ImGui/imgui_impl_sdl3.h"
 #include "UI.hpp"
+#include "glad/glad.h"
 #include "glm/ext/matrix_transform.hpp"
 #include <Renderer.hpp>
 
@@ -34,9 +35,7 @@ constexpr std::string s_ext = ".hzmdl";
 
 constexpr std::string a_ext = ".ahzm";
 
-#define DEAFULT_ASSETS ;
-
-message_queue mq(open_or_create, "model_select_eHaz", 100, 512);
+message_queue mq(open_or_create, "model_select_eHaz", 100, 1024);
 
 float g_fDeltaTime = 0.0f;
 
@@ -164,14 +163,12 @@ int main(int argc, char *argv[]) {
 
 #ifdef DEBUGGING_ARGS
 
-  static const char *fake_argv[] = {"./eHazEngine",
-                                    "--root",
+  static const char *fake_argv[] = {"./eHazEngine", "--root",
                                     "/home/floatz/Projects/personal/c++/ENGINE/"
                                     "eHaz Model Viewer/eHaz-Model-Viewer/",
-                                    "--ext",
-                                    ".hzmdl",
-                                    ".ahzm",
-                                    nullptr};
+                                    "--ext", ".hzmdl",
+                                    //  .ahzm",
+                                    ".glb", nullptr};
 
   argc = 6;
   argv = const_cast<char **>(fake_argv);
@@ -223,12 +220,14 @@ int main(int argc, char *argv[]) {
   SBufferRange l_brCameraDataLocation = l_renderer.SubmitDynamicData(
       &l_cdFinalData, sizeof(l_cdFinalData), TypeFlags::BUFFER_CAMERA_DATA);
 
-  std::string testPath = PROJECT_ROOT_DIR "/assets/test.hzmdl";
+  std::string testPath = PROJECT_ROOT_DIR "/assets/boombox.glb";
   // SDL_Log(testPath.c_str());
-  ModelID l_midTestModel =
-      eHazGraphics::Renderer::p_meshManager->LoadHazModel(testPath);
+  // ModelID l_midTestModel =
+  // eHazGraphics::Renderer::p_meshManager->LoadHazModel(testPath);
 
-  g_sptrModel = l_renderer.p_meshManager->GetModel(l_midTestModel);
+  // g_sptrModel = l_renderer.p_meshManager->GetModel(l_midTestModel);
+
+  g_sptrModel = l_renderer.p_meshManager->LoadModel(testPath);
 
   glm::mat4 pos = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 
@@ -244,9 +243,10 @@ int main(int argc, char *argv[]) {
 
   auto l_vdrRanges = l_renderer.p_renderQueue->SubmitRenderCommands();
 
-  std::string l_strLastPath = l_vstrFiles[0];
-
+  std::string l_strLastPath = l_vstrFiles[1];
+  int frameNum = 0;
   while (l_renderer.shouldQuit == false) {
+
     static uint64_t lastCounter = SDL_GetPerformanceCounter();
     uint64_t currentCounter = SDL_GetPerformanceCounter();
 
@@ -271,6 +271,9 @@ int main(int argc, char *argv[]) {
     Renderer::r_instance->SubmitStaticModel(g_sptrModel, pos,
                                             TypeFlags::BUFFER_STATIC_MESH_DATA);
 
+    l_renderer.UpdateDynamicData(l_brMaterials, mat.first.data(),
+                                 mat.first.size() * sizeof(PBRMaterial));
+
     l_vdrRanges = Renderer::p_renderQueue->SubmitRenderCommands();
 
     l_renderer.SetFrameBuffer(l_renderer.GetMainFBO());
@@ -283,15 +286,14 @@ int main(int argc, char *argv[]) {
 
     l_renderer.SwapBuffers();
 
-    l_renderer.UpdateDynamicData(l_brMaterials, mat.first.data(),
-                                 mat.first.size() * sizeof(PBRMaterial));
+    l_renderer.EndFrame();
 
     if (l_strLastPath != l_SelectUI.m_sSelectedFile &&
         l_SelectUI.m_sSelectedFile != "") {
 
       LoadSelectedModel(l_FileSystem.root.string() +
                         l_SelectUI.m_sSelectedFile);
-
+      SDL_Log("frame %i", ++frameNum);
       SDL_Log(("last path: " + l_strLastPath).c_str());
       SDL_Log(("selected path: " + l_SelectUI.m_sSelectedFile).c_str());
       l_strLastPath = l_SelectUI.m_sSelectedFile;
@@ -313,21 +315,36 @@ void LoadSelectedModel(std::string path) {
 
   auto &renderer = Renderer::r_instance;
 
-  renderer->p_bufferManager->ClearBuffer(TypeFlags::BUFFER_STATIC_MESH_DATA);
+  /* renderer->p_bufferManager->ClearBuffer(TypeFlags::BUFFER_STATIC_MESH_DATA);
 
-  renderer->p_bufferManager->ClearBuffer(TypeFlags::BUFFER_STATIC_MATRIX_DATA);
+   renderer->p_bufferManager->ClearBuffer(TypeFlags::BUFFER_STATIC_MATRIX_DATA);
 
-  renderer->p_bufferManager->ClearBuffer(TypeFlags::BUFFER_ANIMATED_MESH_DATA);
-  renderer->p_bufferManager->ClearBuffer(TypeFlags::BUFFER_ANIMATION_DATA);
+   renderer->p_bufferManager->ClearBuffer(TypeFlags::BUFFER_ANIMATED_MESH_DATA);
+   renderer->p_bufferManager->ClearBuffer(TypeFlags::BUFFER_ANIMATION_DATA);
 
-  renderer->p_meshManager->ClearEverything();
-  renderer->p_AnimatedModelManager->ClearEverything();
-  renderer->p_bufferManager->ClearBuffer(TypeFlags::BUFFER_STATIC_DATA);
+   // ModelID l_tmpID = g_sptrModel->GetID();
+   g_sptrModel.reset();
+   g_sptrModel->ClearInstances();
 
-  renderer->p_renderQueue->ClearDynamicCommands();
-  renderer->p_renderQueue->ClearStaticCommnads();
+   renderer->p_meshManager->ClearEverything();
+   renderer->p_AnimatedModelManager->ClearEverything();
+   renderer->p_bufferManager->ClearBuffer(TypeFlags::BUFFER_STATIC_DATA);
 
-  ModelID l_mID = renderer->p_meshManager->LoadHazModel(path);
-  g_sptrModel = renderer->p_meshManager->GetModel(l_mID);
+   renderer->p_renderQueue->ClearDynamicCommands();
+   renderer->p_renderQueue->ClearStaticCommnads();
+
+   ModelID l_mID = renderer->p_meshManager->LoadHazModel(path);
+   g_sptrModel = renderer->p_meshManager->GetModel(l_mID);*/
+
+  // renderer->p_meshManager->EraseModel(l_tmpID);
+  //
+  //
+
+  renderer->WaitForGPU();
+  Renderer::p_meshManager->EraseModel(g_sptrModel->GetID());
+  Renderer::p_bufferManager->ClearBuffer(TypeFlags::BUFFER_STATIC_MESH_DATA);
+  g_sptrModel.reset();
+  g_sptrModel = Renderer::p_meshManager->LoadModel(path);
+
   Renderer::p_meshManager->SetModelShader(g_sptrModel, g_siShader);
 }

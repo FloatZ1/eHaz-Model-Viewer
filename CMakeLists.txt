@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.19)
-project(eHaz-Game-Engine)
+project(eHaz-Model-Viewer)
 
 # ---------------------------------------
 # Compiler must be set BEFORE project()
@@ -7,7 +7,8 @@ project(eHaz-Game-Engine)
 # Normally you set this via CLI, but if you want:
 set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_C_COMPILER clang)
-
+#set(CMAKE_CXX_FLAGS_DEBUG
+#    "-O0 -g -fno-omit-frame-pointer -fsanitize=address,undefined")
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -44,9 +45,9 @@ file(GLOB_RECURSE EHAZVIEWER_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*/*.cpp"
 )
 
-add_executable(eHazEngine ${EHAZVIEWER_SOURCES})
+add_executable(eHazViewer ${EHAZVIEWER_SOURCES})
 
-target_include_directories(eHazEngine
+target_include_directories(eHazViewer
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 
@@ -55,7 +56,7 @@ target_include_directories(eHazEngine
         ${Boost_INCLUDE_DIRS}
 )
 
-target_link_libraries(eHazEngine
+target_link_libraries(eHazViewer
     PUBLIC EnvHazGraphics
 )
 
@@ -63,7 +64,7 @@ target_link_libraries(eHazEngine
 # Warning settings (your code ONLY)
 # ---------------------------------------
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(eHazEngine PRIVATE
+    target_compile_options(eHazViewer PRIVATE
         -Wall
         -Wextra
         -Wpedantic
@@ -85,7 +86,7 @@ endif()
 # ---------------------------------------
 # Project defines
 # ---------------------------------------
-target_compile_definitions(eHazEngine PRIVATE
+target_compile_definitions(eHazViewer PRIVATE
     PROJECT_ROOT_DIR="${CMAKE_SOURCE_DIR}"
 )
 
