@@ -159,29 +159,29 @@ std::shared_ptr<Model> g_sptrModel;
 void LoadSelectedModel(std::string path);
 
 #define DEBUGGING_ARGS
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
 
 #ifdef DEBUGGING_ARGS
 
 #ifdef PLATFORM_LINUX
-    static const char* fake_argv[] = { "./eHazEngine", "--root",
-                                      "/home/floatz/Projects/personal/c++/ENGINE/"
-                                      "eHaz Model Viewer/eHaz-Model-Viewer/",
-                                      "--ext", ".hzmdl",
-        //  .ahzm",
-        ".glb", nullptr };
+  static const char *fake_argv[] = {"./eHazEngine", "--root",
+                                    "/home/floatz/Projects/personal/c++/ENGINE/"
+                                    "eHaz Model Viewer/eHaz-Model-Viewer/",
+                                    "--ext", ".hzmdl",
+                                    //  .ahzm",
+                                    ".glb", nullptr};
 
-    argc = 6;
-    argv = const_cast<char**>(fake_argv);
+  argc = 6;
+  argv = const_cast<char **>(fake_argv);
 #elif defined(PLATFORM_WINDOWS)
 
-    static const char* fake_argv[] = { "nah", "--root",
-                                     "C:\\Users\\WB\\Documents\\GitHub\\eHaz-Model-Viewer",
-    "--ext",".hzmdl",".glb",nullptr };
+  static const char *fake_argv[] = {
+      "nah",   "--root", "C:\\Users\\WB\\Documents\\GitHub\\eHaz-Model-Viewer",
+      "--ext", ".hzmdl", ".glb",
+      nullptr};
 
-    argc = 6;
-    argv = const_cast<char**>(fake_argv);
-
+  argc = 6;
+  argv = const_cast<char **>(fake_argv);
 
 #endif
 #endif
@@ -247,7 +247,9 @@ int main(int argc, char* argv[]) {
   // Renderer::r_instance->SubmitStaticModel(g_sptrModel, pos,
   //                                        TypeFlags::BUFFER_STATIC_MESH_DATA);
 
-  pos = glm::translate(pos, glm::vec3(0.0f, 0.0f, 0.0f));
+  pos = glm::translate(glm::mat4(1.0f), l_SelectUI.GetPositionModifiers()) *
+        glm::mat4_cast(l_SelectUI.GetRotationModifiers()) *
+        glm::scale(glm::mat4(1.0f), l_SelectUI.GetScaleModifiers());
 
   Renderer::r_instance->SubmitStaticModel(g_sptrModel, pos,
                                           TypeFlags::BUFFER_STATIC_MESH_DATA);
@@ -257,7 +259,9 @@ int main(int argc, char* argv[]) {
   std::string l_strLastPath = l_vstrFiles[1];
   int frameNum = 0;
   while (l_renderer.shouldQuit == false) {
-
+    pos = glm::translate(glm::mat4(1.0f), l_SelectUI.GetPositionModifiers()) *
+          glm::mat4_cast(l_SelectUI.GetRotationModifiers()) *
+          glm::scale(glm::mat4(1.0f), l_SelectUI.GetScaleModifiers());
     static uint64_t lastCounter = SDL_GetPerformanceCounter();
     uint64_t currentCounter = SDL_GetPerformanceCounter();
 
@@ -274,9 +278,9 @@ int main(int argc, char* argv[]) {
 
     l_cdFinalData = {g_camera.GetViewMatrix(), projection};
 
-   
-   // l_brCameraDataLocation = l_renderer.SubmitDynamicData(&l_cdFinalData, sizeof(l_cdFinalData),
-   //                                                              TypeFlags::BUFFER_CAMERA_DATA);
+    // l_brCameraDataLocation = l_renderer.SubmitDynamicData(&l_cdFinalData,
+    // sizeof(l_cdFinalData),
+    //                                                              TypeFlags::BUFFER_CAMERA_DATA);
     l_renderer.UpdateDynamicData(l_brCameraDataLocation, &l_cdFinalData,
                                  sizeof(l_cdFinalData));
 
@@ -306,11 +310,11 @@ int main(int argc, char* argv[]) {
         l_SelectUI.m_sSelectedFile != "") {
 
 #ifdef PLATFORM_WINDOWS
-      LoadSelectedModel(l_FileSystem.root.string()+"\\" +
+      LoadSelectedModel(l_FileSystem.root.string() + "\\" +
                         l_SelectUI.m_sSelectedFile);
-#elif
-        LoadSelectedModel(l_FileSystem.root.string() +
-            l_SelectUI.m_sSelectedFile);
+#elif defined(PLATFORM_LINUX)
+      LoadSelectedModel(l_FileSystem.root.string() +
+                        l_SelectUI.m_sSelectedFile);
 #endif
       SDL_Log("frame %i", ++frameNum);
       SDL_Log(("last path: " + l_strLastPath).c_str());
@@ -319,18 +323,21 @@ int main(int argc, char* argv[]) {
     }
 
     if (l_SelectUI.m_bFinished || l_SelectUI.m_bCanceled) {
+      if (l_SelectUI.m_bFinished) {
 
-      l_renderer.shouldQuit = true;
+        // send the final path
+        mq.send(l_SelectUI.m_sSelectedFile.c_str(),
+                std::strlen(l_SelectUI.m_sSelectedFile.c_str()) + 1, 0);
+
+        l_renderer.shouldQuit = true;
+
+      } else if (l_SelectUI.m_bCanceled) {
+        l_renderer.shouldQuit = true;
+      }
     }
   }
 
-  if (l_SelectUI.m_bFinished) {
-
-    // send the final path
-  }
-
   return 0;
-
 }
 
 void LoadSelectedModel(std::string path) {
@@ -363,8 +370,8 @@ void LoadSelectedModel(std::string path) {
   //
 
   renderer->WaitForGPU();
-  //Renderer::p_meshManager->EraseModel(g_sptrModel->GetID());
-  //Renderer::p_bufferManager->ClearBuffer(TypeFlags::BUFFER_STATIC_MESH_DATA);
+  // Renderer::p_meshManager->EraseModel(g_sptrModel->GetID());
+  // Renderer::p_bufferManager->ClearBuffer(TypeFlags::BUFFER_STATIC_MESH_DATA);
   renderer->p_meshManager->ClearEverything();
   g_sptrModel.reset();
   g_sptrModel = Renderer::p_meshManager->LoadModel(path);
