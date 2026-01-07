@@ -31,9 +31,9 @@
 using namespace boost::interprocess;
 
 using namespace eHazGraphics;
-constexpr std::string s_ext = ".hzmdl";
+const std::string s_ext = ".hzmdl";
 
-constexpr std::string a_ext = ".ahzm";
+const std::string a_ext = ".ahzm";
 
 message_queue mq(open_or_create, "model_select_eHaz", 100, 1024);
 
@@ -159,20 +159,31 @@ std::shared_ptr<Model> g_sptrModel;
 void LoadSelectedModel(std::string path);
 
 #define DEBUGGING_ARGS
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
 
 #ifdef DEBUGGING_ARGS
 
-  static const char *fake_argv[] = {"./eHazEngine", "--root",
-                                    "/home/floatz/Projects/personal/c++/ENGINE/"
-                                    "eHaz Model Viewer/eHaz-Model-Viewer/",
-                                    "--ext", ".hzmdl",
-                                    //  .ahzm",
-                                    ".glb", nullptr};
+#ifdef PLATFORM_LINUX
+    static const char* fake_argv[] = { "./eHazEngine", "--root",
+                                      "/home/floatz/Projects/personal/c++/ENGINE/"
+                                      "eHaz Model Viewer/eHaz-Model-Viewer/",
+                                      "--ext", ".hzmdl",
+        //  .ahzm",
+        ".glb", nullptr };
 
-  argc = 6;
-  argv = const_cast<char **>(fake_argv);
+    argc = 6;
+    argv = const_cast<char**>(fake_argv);
+#elif defined(PLATFORM_WINDOWS)
 
+    static const char* fake_argv[] = { "nah", "--root",
+                                     "C:\\Users\\WB\\Documents\\GitHub\\eHaz-Model-Viewer",
+    "--ext",".hzmdl",".glb",nullptr };
+
+    argc = 6;
+    argv = const_cast<char**>(fake_argv);
+
+
+#endif
 #endif
 
   // make it set the root from the arguments
@@ -220,7 +231,7 @@ int main(int argc, char *argv[]) {
   SBufferRange l_brCameraDataLocation = l_renderer.SubmitDynamicData(
       &l_cdFinalData, sizeof(l_cdFinalData), TypeFlags::BUFFER_CAMERA_DATA);
 
-  std::string testPath = PROJECT_ROOT_DIR "/assets/boombox.glb";
+  std::string testPath = PROJECT_ROOT_DIR "/assets/Capoeira.glb";
   // SDL_Log(testPath.c_str());
   // ModelID l_midTestModel =
   // eHazGraphics::Renderer::p_meshManager->LoadHazModel(testPath);
@@ -263,6 +274,9 @@ int main(int argc, char *argv[]) {
 
     l_cdFinalData = {g_camera.GetViewMatrix(), projection};
 
+   
+   // l_brCameraDataLocation = l_renderer.SubmitDynamicData(&l_cdFinalData, sizeof(l_cdFinalData),
+   //                                                              TypeFlags::BUFFER_CAMERA_DATA);
     l_renderer.UpdateDynamicData(l_brCameraDataLocation, &l_cdFinalData,
                                  sizeof(l_cdFinalData));
 
@@ -291,8 +305,13 @@ int main(int argc, char *argv[]) {
     if (l_strLastPath != l_SelectUI.m_sSelectedFile &&
         l_SelectUI.m_sSelectedFile != "") {
 
-      LoadSelectedModel(l_FileSystem.root.string() +
+#ifdef PLATFORM_WINDOWS
+      LoadSelectedModel(l_FileSystem.root.string()+"\\" +
                         l_SelectUI.m_sSelectedFile);
+#elif
+        LoadSelectedModel(l_FileSystem.root.string() +
+            l_SelectUI.m_sSelectedFile);
+#endif
       SDL_Log("frame %i", ++frameNum);
       SDL_Log(("last path: " + l_strLastPath).c_str());
       SDL_Log(("selected path: " + l_SelectUI.m_sSelectedFile).c_str());
@@ -309,6 +328,9 @@ int main(int argc, char *argv[]) {
 
     // send the final path
   }
+
+  return 0;
+
 }
 
 void LoadSelectedModel(std::string path) {
@@ -341,8 +363,9 @@ void LoadSelectedModel(std::string path) {
   //
 
   renderer->WaitForGPU();
-  Renderer::p_meshManager->EraseModel(g_sptrModel->GetID());
-  Renderer::p_bufferManager->ClearBuffer(TypeFlags::BUFFER_STATIC_MESH_DATA);
+  //Renderer::p_meshManager->EraseModel(g_sptrModel->GetID());
+  //Renderer::p_bufferManager->ClearBuffer(TypeFlags::BUFFER_STATIC_MESH_DATA);
+  renderer->p_meshManager->ClearEverything();
   g_sptrModel.reset();
   g_sptrModel = Renderer::p_meshManager->LoadModel(path);
 
