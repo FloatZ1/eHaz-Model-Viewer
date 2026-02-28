@@ -154,7 +154,7 @@ struct camData {
   glm::mat4 projection = glm::mat4(1.0f);
 };
 
-std::shared_ptr<Model> g_sptrModel;
+ModelID g_midModel;
 
 void LoadSelectedModel(std::string path);
 
@@ -167,7 +167,7 @@ int main(int argc, char *argv[]) {
   static const char *fake_argv[] = {"./eHazEngine", "--root",
                                     "/home/floatz/Projects/personal/c++/ENGINE/"
                                     "eHaz Model Viewer/eHaz-Model-Viewer/",
-                                    "--ext", ".hzmdl",
+                                    "--ext", ".nothing",
                                     //  .ahzm",
                                     ".glb", nullptr};
 
@@ -238,11 +238,11 @@ int main(int argc, char *argv[]) {
 
   // g_sptrModel = l_renderer.p_meshManager->GetModel(l_midTestModel);
 
-  g_sptrModel = l_renderer.p_meshManager->LoadModel(testPath);
+  g_midModel = l_renderer.p_meshManager->LoadModel(testPath);
 
   glm::mat4 pos = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 
-  Renderer::p_meshManager->SetModelShader(g_sptrModel, g_siShader);
+  Renderer::p_meshManager->SetModelShader(g_midModel, g_siShader);
 
   // Renderer::r_instance->SubmitStaticModel(g_sptrModel, pos,
   //                                        TypeFlags::BUFFER_STATIC_MESH_DATA);
@@ -251,7 +251,8 @@ int main(int argc, char *argv[]) {
         glm::mat4_cast(l_SelectUI.GetRotationModifiers()) *
         glm::scale(glm::mat4(1.0f), l_SelectUI.GetScaleModifiers());
 
-  Renderer::r_instance->SubmitStaticModel(g_sptrModel, pos,
+  Renderer::r_instance->SubmitStaticModel(g_midModel, pos, materialID,
+                                          g_siShader,
                                           TypeFlags::BUFFER_STATIC_MESH_DATA);
 
   auto l_vdrRanges = l_renderer.p_renderQueue->SubmitRenderCommands();
@@ -286,7 +287,8 @@ int main(int argc, char *argv[]) {
 
     l_renderer.UpdateRenderer(g_fDeltaTime);
 
-    Renderer::r_instance->SubmitStaticModel(g_sptrModel, pos,
+    Renderer::r_instance->SubmitStaticModel(g_midModel, pos, materialID,
+                                            g_siShader,
                                             TypeFlags::BUFFER_STATIC_MESH_DATA);
 
     l_renderer.UpdateDynamicData(l_brMaterials, mat.first.data(),
@@ -370,11 +372,13 @@ void LoadSelectedModel(std::string path) {
   //
 
   renderer->WaitForGPU();
+
+  renderer->p_bufferManager->ClearBuffer(TypeFlags::BUFFER_STATIC_MESH_DATA);
+
   // Renderer::p_meshManager->EraseModel(g_sptrModel->GetID());
   // Renderer::p_bufferManager->ClearBuffer(TypeFlags::BUFFER_STATIC_MESH_DATA);
   renderer->p_meshManager->ClearEverything();
-  g_sptrModel.reset();
-  g_sptrModel = Renderer::p_meshManager->LoadModel(path);
+  g_midModel = Renderer::p_meshManager->LoadModel(path);
 
-  Renderer::p_meshManager->SetModelShader(g_sptrModel, g_siShader);
+  Renderer::p_meshManager->SetModelShader(g_midModel, g_siShader);
 }
