@@ -226,10 +226,7 @@ int main(int argc, char *argv[]) {
                            (float)l_renderer.p_window->GetHeight(),
                        0.1f, 100.0f);
 
-  camData l_cdFinalData{g_camera.GetViewMatrix(), projection};
-
-  SBufferRange l_brCameraDataLocation = l_renderer.SubmitDynamicData(
-      &l_cdFinalData, sizeof(l_cdFinalData), TypeFlags::BUFFER_CAMERA_DATA);
+  l_renderer.SetViewProjection(g_camera.GetViewMatrix(), projection);
 
   std::string testPath = PROJECT_ROOT_DIR "/assets/Capoeira.glb";
   // SDL_Log(testPath.c_str());
@@ -277,13 +274,7 @@ int main(int argc, char *argv[]) {
                                       (float)l_renderer.p_window->GetHeight(),
                                   0.1f, 100.0f);
 
-    l_cdFinalData = {g_camera.GetViewMatrix(), projection};
-
-    // l_brCameraDataLocation = l_renderer.SubmitDynamicData(&l_cdFinalData,
-    // sizeof(l_cdFinalData),
-    //                                                              TypeFlags::BUFFER_CAMERA_DATA);
-    l_renderer.UpdateDynamicData(l_brCameraDataLocation, &l_cdFinalData,
-                                 sizeof(l_cdFinalData));
+    l_renderer.SetViewProjection(g_camera.GetViewMatrix(), projection);
 
     l_renderer.UpdateRenderer(g_fDeltaTime);
 
@@ -306,7 +297,7 @@ int main(int argc, char *argv[]) {
 
     l_renderer.SwapBuffers();
 
-    l_renderer.EndFrame();
+    // l_renderer.EndFrame();
 
     if (l_strLastPath != l_SelectUI.m_sSelectedFile &&
         l_SelectUI.m_sSelectedFile != "") {
